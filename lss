@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+
+# https://github.com/ViktorQvarfordt/lss
+
+
+import os
+import sys
+
+
+def human_readable_bytes(bytes):
+    if bytes < 1000:
+        return '%s B' % bytes
+    elif bytes < 1000**2:
+        return '%.2f KB' % (bytes / 1000)
+    elif bytes < 1000**3:
+        return '%.2f MB' % (bytes / 1000**2)
+    else:
+        return '%.2f GB' % (bytes / 1000**3)
+
+
+def human_readable_number(x):
+    if x < 10000:
+        return '%s' % x
+    elif x < 1000**2:
+        return '%.2f K' % (x / 1000)
+    elif x < 1000**3:
+        return '%.2f M' % (x / 1000**2)
+    else:
+        return '%.2f G' % (x / 1000**3)
+
+
+def get_recursive_size(startpath):
+    if os.path.isfile(startpath):
+        return os.path.getsize(startpath), 1, 0
+    size = 0
+    filecount = 0
+    dircount = 0
+    for dirpath, dirnames, filenames in os.walk(startpath):
+        size += os.path.getsize(dirpath)
+        dircount += 1
+        for f in filenames:
+            fp = os.path.join(dirpath, f)
+            if os.path.islink(fp):
+                continue
+            filecount += 1
+            size += os.path.getsize(fp)
+    return size, filecount, dircount
+
+
+def get_base_path():
+    if len(sys.argv) == 1:
+        base_path = '.'
+    elif len(sys.argv) == 2:
+        base_path = sys.argv[1]
+    else:
+        print('Bad arguments')
+        sys.exit(1)
+
+    if not os.path.exists(base_path):
+        print('No such file or directory: ' + base_path)
+        sys.exit(1)
+
+    if os.path.isdir(base_path) and base_path[-1] != '/':
+        base_path = base_path + '/'
+
+    return base_path
+
+
+def get_paths(base_path):
+    if os.path.isdir(base_path):
+        prefix = base_path if base_path != './' else ''
+        return [prefix + path for path in os.listdir(base_path)]
+    else:
+        return [base_path]
+
+
+def get_rows(paths):
+    rows = []
+    for path in paths:
+        bytesize, filecount, dircount = get_recursive_size(path)
+        name = path
+        isdir = False
+        if os.path.isdir(path):
+            isdir = True
+            name = path + '/'
+            if name[-2:] == '//':
+                name = name[:-1]
+        rows.append({
+            'bytesize': bytesize,
+            'name': name,
+            'filecount': filecount,
+            'dircount': dircount,
+            'isdir': isdir
+        })
+    rows.sort(key=lambda x: x['bytesize'])
+    return rows
+
+
+def get_total(base_path, rows):
+    if base_path == './':
+        base_path = '.'
+    total = {
+        'name': base_path,
+        'bytesize': os.path.getsize(base_path),
+        'filecount': 0,
+        'dircount': 1,  # All directories count them selves
+        'isdir': os.path.isdir(base_path)
+    }
+    for row in rows:
+        total['bytesize'] += row['bytesize']
+        total['filecount'] += row['filecount']
+        total['dircount'] += row['dircount']
+    return total
+
+
+def print_rows(rows):
+    bytesize_width = max([len(human_readable_bytes(row['bytesize'])) for row in rows])
+    name_width = max([len(row['name']) for row in rows])
+    filecount_width = max([len(human_readable_number(row['filecount'])) for row in rows])
+
+    for row in rows:
+        print(human_readable_bytes(row['bytesize']).ljust(bytesize_width + 2), end='')
+        print(row['name'].ljust(name_width + 2), end='')
+        if (row['isdir']):
+            print(human_readable_number(row['filecount']).ljust(filecount_width + 2), end='')
+            print(row['dircount'] - 1, end='')  # Don't count directory as child directory
+        print()
+
+
+def main():
+    base_path = get_base_path()
+    paths = get_paths(base_path)
+    if len(paths) == 0:
+        return
+    rows = get_rows(paths)
+    if len(paths) > 1 or os.path.isdir(base_path):
+        rows.append(get_total(base_path, rows))
+    print_rows(rows)
+
+
+main()
