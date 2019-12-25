@@ -20,28 +20,29 @@ $ chmod +x /usr/local/bin/lss
 ```
 $ lss
  1.07 KB  LICENSE
- 1.55 KB  README.md
- 3.76 KB  lss
-34.03 KB  .git/      35  24
-40.61 KB  .          38  25
+ 1.72 KB  README.md
+ 3.98 KB  lss
+41.63 KB  .git/      48  39
+48.60 KB  .          51  40
 
 $ lss .git
-   23  B  .git/HEAD
+   31  B  .git/COMMIT_EDITMSG
    41  B  .git/ORIG_HEAD
+   41  B  .git/HEAD
    73  B  .git/description
-  137  B  .git/config
+  246  B  .git/config
   281  B  .git/index
-  329  B  .git/refs/           1   2
   336  B  .git/info/           1   0
- 1.06 KB  .git/COMMIT_EDITMSG
- 4.04 KB  .git/logs/           2   2
- 8.04 KB  .git/objects/        14  15
+  521  B  .git/refs/           1   4
+ 5.04 KB  .git/logs/           2   4
+15.34 KB  .git/objects/        27  26
 19.26 KB  .git/hooks/          11  0
-34.03 KB  .git/                35  24
+41.63 KB  .git/                48  39
 ```
 
 The third and fourth columns are the number of files and subfolders inside a folder, respectively.
 
+If you pass more than one argument, then `lss` will not list children, to support the use case `lss *jpg`.
 
 ## FAQ
 
